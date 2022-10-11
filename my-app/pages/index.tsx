@@ -1,6 +1,6 @@
 import type { GetServerSideProps, NextPage } from 'next'
 import Router, { useRouter } from 'next/router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { prisma } from '../lib/prisma'
 
 interface Notes {
@@ -16,7 +16,7 @@ interface FormData {
   id: string
 }
 
-const Home: NextPage = ({notes}: Notes) => {
+const Home: NextPage = ({ notes }: Notes) => {
   const [form, setForm] = useState<FormData>({ title: '', content: '', id: '' })
   const router = useRouter()
 
@@ -31,7 +31,25 @@ const Home: NextPage = ({notes}: Notes) => {
         headers: { 'Content-Type': 'application/json' },
         method: 'POST'
       }).then(() => {
+        refreshData()
+        if ( data.id ) {
+          deleteNote(data.id)
+        }
         setForm({ title: '', content: '', id: '' })
+      })
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  const deleteNote = async (id: string) => {
+    try {
+      fetch(`/api/note/${id}`, {
+        headers: {
+          "Content-Type": "application/json"
+        },
+        method: 'DELETE'
+      }).then(() => {
         refreshData()
       })
     } catch (err) {
@@ -68,15 +86,35 @@ const Home: NextPage = ({notes}: Notes) => {
       </form>
 
       <div className='mt-5'>
-        <ul className="mt-3">
+        <div className="mt-3">
           {notes.map((note, i) => {
             return [
-              <li key={note.id} id={note.id} className="mt-3">
-                {note.title}
-              </li>
+              <div key={i} id={note.id} className="mt-2 border rounded p-3 flex items-center justify-between">
+                <div>
+                  <div className="font-bold font-xl text-decoration"><p>{note.title}</p></div>
+                  <div className="font-sm">{note.content}</div>
+                </div>
+                <div className="flex items-center">
+                  <button
+                    className="px-3 py-1 bg-blue-400 rounded-md transition-all hover:bg-blue-300"
+                    onClick={() => setForm({
+                      title: note.title,
+                      content: note.content,
+                      id: note.id
+                    })}
+                  >
+                    Update
+                  </button>
+                  <button className="ml-2 px-3 py-1 bg-red-400 rounded-md transition-all hover:bg-red-300"
+                    onClick={() => deleteNote(note.id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
             ]
           })}
-        </ul>
+        </div>
       </div>
     </div>
   )
