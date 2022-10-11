@@ -1,4 +1,5 @@
 import type { GetServerSideProps, NextPage } from 'next'
+import Router, { useRouter } from 'next/router'
 import { useState } from 'react'
 import { prisma } from '../lib/prisma'
 
@@ -17,6 +18,11 @@ interface FormData {
 
 const Home: NextPage = ({notes}: Notes) => {
   const [form, setForm] = useState<FormData>({ title: '', content: '', id: '' })
+  const router = useRouter()
+
+  const refreshData = () => {
+    Router.replace(router.asPath)
+  }
 
   const create = async (data: FormData) => {
     try {
@@ -24,7 +30,10 @@ const Home: NextPage = ({notes}: Notes) => {
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' },
         method: 'POST'
-      }).then(() => setForm({ title: '', content: '', id: '' }))
+      }).then(() => {
+        setForm({ title: '', content: '', id: '' })
+        refreshData()
+      })
     } catch (err) {
       console.log(err)
     }
